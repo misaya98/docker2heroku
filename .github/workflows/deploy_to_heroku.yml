@@ -1,0 +1,69 @@
+# 工作流名称
+name: Deploy Docker Image to Heroku
+
+on:
+  workflow_dispatch:
+    inputs:
+      # 输入参数1：要部署的 Docker Hub 镜像名称
+      docker_image:
+        description: 'The full Docker Hub image name and tag (e.g., your-username/your-image:latest)'
+        required: true
+        type: string
+      # 输入参数2：Heroku 的环境变量配置
+      heroku_config_vars:
+        description: 'Heroku config variables (one per line, e.g., KEY=VALUE)'
+        required: false
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 步骤1：检出代码库（虽然我们不直接用代码，但这是运行 heroku-cli action 的好习惯）
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 步骤2：登录到 Heroku 容器注册表 (已修复)
+      # 使用标准的 docker login 命令进行非交互式登录。
+      # Heroku 注册表的用户名固定为 `_`，密码使用 HEROKU_API_KEY。
+      - name: Log in to Heroku Container Registry
+        run: echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
+
+      # 步骤3：(可选) 登录到 Docker Hub
+      # 仅当 DOCKERHUB_USERNAME 和 DOCKERHUB_TOKEN 两个 Secret 都被设置时，才执行此步骤。
+      - name: Log in to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 步骤4：从 Docker Hub 拉取镜像
+      - name: Pull image from Docker Hub
+        run: docker pull ${{ github.event.inputs.docker_image }}
+
+      # 步骤5：为镜像重打 Heroku 格式的标签
+      - name: Retag Docker image for Heroku
+        run: docker tag ${{ github.event.inputs.docker_image }} registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web
+
+      # 步骤6：将镜像推送到 Heroku 容器注册表
+      - name: Push image to Heroku Container Registry
+        run: docker push registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web
+
+      # 步骤7：在 Heroku 上发布新镜像
+      - name: Release new image on Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
+
+      # 步骤8：设置 Heroku 环境变量
+      - name: Set Heroku config variables
+        # 仅当用户提供了 config 变量时才运行此步骤
+        if: ${{ github.event.inputs.heroku_config_vars != '' }}
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_CONFIG_VARS: ${{ github.event.inputs.heroku_config_vars }}
+        run: |
+          # 将多行输入转换为一个数组，以便安全地设置
+          # 这样可以处理值中包含空格或特殊字符的情况
+          echo "$HEROKU_CONFIG_VARS" | xargs heroku config:set --app ${{ secrets.HEROKU_APP_NAME }}
