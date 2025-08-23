@@ -71,13 +71,17 @@ jobs:
       - name: Push image to Heroku Container Registry
         run: docker push registry.heroku.com/${{ steps.vars.outputs.app_name }}/web
 
-      # 步骤8：在 Heroku 上发布新镜像
+      # 步骤8：安装 Heroku CLI
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh
+
+      # 步骤9：在 Heroku 上发布新镜像
       - name: Release new image on Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: heroku container:release web --app ${{ steps.vars.outputs.app_name }}
 
-      # 步骤9：设置 Heroku 环境变量
+      # 步骤10：设置 Heroku 环境变量
       - name: Set Heroku config variables
         if: ${{ github.event.inputs.heroku_config_vars != '' }}
         env:
