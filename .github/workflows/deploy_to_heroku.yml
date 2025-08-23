@@ -1,6 +1,7 @@
 # 工作流名称
 name: Deploy Docker Image to Heroku
 
+# 触发条件：允许手动触发
 on:
   workflow_dispatch:
     inputs:
