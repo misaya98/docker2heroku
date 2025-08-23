@@ -20,20 +20,22 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # 步骤1：检出代码库（虽然我们不直接用代码，但这是运行 heroku-cli action 的好习惯）
+      # 步骤1：检出代码库
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 步骤2：登录到 Heroku 容器注册表 (已修复)
-      # 使用标准的 docker login 命令进行非交互式登录。
-      # Heroku 注册表的用户名固定为 `_`，密码使用 HEROKU_API_KEY。
+      # 步骤2：登录到 Heroku 容器注册表
       - name: Log in to Heroku Container Registry
         run: echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
 
       # 步骤3：(可选) 登录到 Docker Hub
       # 仅当 DOCKERHUB_USERNAME 和 DOCKERHUB_TOKEN 两个 Secret 都被设置时，才执行此步骤。
       - name: Log in to Docker Hub
-        if: ${{ secrets.DOCKERHUB_USERNAME && secrets.DOCKERHUB_TOKEN }}
+        # 先将 secrets 映射到环境变量，然后检查环境变量是否存在
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        if: env.DOCKERHUB_USERNAME && env.DOCKERHUB_TOKEN
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
