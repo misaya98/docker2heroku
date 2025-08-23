@@ -79,7 +79,7 @@ jobs:
       - name: Release new image on Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: heroku container:release web --app ${{ steps.vars.outputs.app_name }}
+        run: heroku container:release web -a ${{ steps.vars.outputs.app_name }}
 
       # 步骤10：设置 Heroku 环境变量
       - name: Set Heroku config variables
