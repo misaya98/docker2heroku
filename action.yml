@@ -1,9 +1,7 @@
-# Action 的元数据，将显示在 GitHub Marketplace
-name: 'Deploy Docker Image to Heroku'
+name: 'docker2heroku'
 description: 'Pulls a Docker image from a registry, optionally creates a new Heroku app, sets config vars, and deploys.'
 author: 'misaya98'
 
-# 定义 Action 的输入参数
 inputs:
   heroku_api_key:
     description: 'Your Heroku API Key.'
@@ -28,40 +26,33 @@ inputs:
     description: 'Your Docker Hub token (for private images or to avoid rate limits).'
     required: false
 
-# 定义 Action 的运行方式
 runs:
   using: "composite"
   steps:
-    # 步骤1：根据用户输入确定 Heroku 应用名称
     - name: Determine Heroku App Name
       id: vars
       shell: bash
       run: |
         APP_NAME=""
-        # 场景 1 & 2: 用户提供了 app_name
         if [[ -n "${{ inputs.heroku_app_name }}" ]]; then
           echo "Using provided Heroku app name: ${{ inputs.heroku_app_name }}"
           APP_NAME="${{ inputs.heroku_app_name }}"
-        # 场景 3: 用户未提供 app_name, 但要求创建新应用
         elif [[ "${{ inputs.create_new_app }}" == "true" ]]; then
           echo "Heroku app name not provided, deriving from Docker image and adding random suffix..."
           BASE_NAME=$(echo "${{ inputs.docker_image }}" | sed 's/:.*//' | sed 's#.*/##')
           RANDOM_SUFFIX=$(openssl rand -hex 3)
           APP_NAME="$BASE_NAME-$RANDOM_SUFFIX"
           echo "Derived and randomized app name: $APP_NAME"
-        # 场景 4: 用户未提供 app_name, 且不创建新应用 (无效场景)
         else
           echo "::error::Invalid input. You must provide an 'Heroku app name' if you are not creating a new app."
           exit 1
         fi
         echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
 
-    # 步骤2：登录到 Heroku 容器注册表
     - name: Log in to Heroku Container Registry
       shell: bash
       run: echo "${{ inputs.heroku_api_key }}" | docker login --username=_ --password-stdin registry.heroku.com
 
-    # 步骤3：(可选) 登录到 Docker Hub
     - name: Log in to Docker Hub
       if: ${{ inputs.dockerhub_username && inputs.dockerhub_token }}
       uses: docker/login-action@v3
@@ -69,12 +60,10 @@ runs:
         username: ${{ inputs.dockerhub_username }}
         password: ${{ inputs.dockerhub_token }}
 
-    # 步骤4：安装 Heroku CLI
     - name: Install Heroku CLI
       shell: bash
       run: curl https://cli-assets.heroku.com/install.sh | sh
 
-    # 步骤5：(条件执行) 如果用户勾选，则创建新应用并设置堆栈
     - name: Create Heroku App if requested
       if: ${{ inputs.create_new_app == 'true' }}
       shell: bash
@@ -82,22 +71,18 @@ runs:
       env:
         HEROKU_API_KEY: ${{ inputs.heroku_api_key }}
 
-    # 步骤6：从 Docker Hub 拉取镜像
     - name: Pull image from Docker Hub
       shell: bash
       run: docker pull ${{ inputs.docker_image }}
 
-    # 步骤7：为镜像重打 Heroku 格式的标签
     - name: Retag Docker image for Heroku
       shell: bash
       run: docker tag ${{ inputs.docker_image }} registry.heroku.com/${{ steps.vars.outputs.app_name }}/web
 
-    # 步骤8：将镜像推送到 Heroku 容器注册表
     - name: Push image to Heroku Container Registry
       shell: bash
       run: docker push registry.heroku.com/${{ steps.vars.outputs.app_name }}/web
 
-    # 步骤9：设置 Heroku 环境变量
     - name: Set Heroku config variables
       if: ${{ inputs.heroku_config_vars != '' }}
       shell: bash
@@ -105,7 +90,6 @@ runs:
       env:
         HEROKU_API_KEY: ${{ inputs.heroku_api_key }}
 
-    # 步骤10：在 Heroku 上发布新镜像
     - name: Release new image on Heroku
       shell: bash
       run: heroku container:release web --app ${{ steps.vars.outputs.app_name }}
