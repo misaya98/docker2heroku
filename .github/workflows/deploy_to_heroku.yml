@@ -47,7 +47,8 @@ jobs:
           # 场景 3: 用户未提供 app_name, 但要求创建新应用
           elif [[ "${{ github.event.inputs.create_new_app }}" == "true" ]]; then
             echo "Heroku app name not provided, deriving from Docker image and adding random suffix..."
-            BASE_NAME=$(echo "${{ github.event.inputs.docker_image }}" | sed -E 's/([^/]+\/)?([^:]+)(:.*)?/\2/')
+            # 使用更可靠的方法提取基础名称：先移除标签，再移除用户/组织前缀
+            BASE_NAME=$(echo "${{ github.event.inputs.docker_image }}" | sed 's/:.*//' | sed 's#.*/##')
             RANDOM_SUFFIX=$(openssl rand -hex 3)
             APP_NAME="$BASE_NAME-$RANDOM_SUFFIX"
             echo "Derived and randomized app name: $APP_NAME"
