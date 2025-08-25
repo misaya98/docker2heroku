@@ -5,10 +5,10 @@ name: Deploy Docker Image to Heroku
 on:
   workflow_dispatch:
     inputs:
-      # 输入参数1：要部署的 Heroku 应用名称 (可选)
+      # 输入参数1：要部署的 Heroku 应用名称
       heroku_app_name:
         description: 'The name of the Heroku app (optional, defaults to image name)'
-        required: false
+        required: true
         type: string
       # 输入参数2：要部署的 Docker Hub 镜像名称
       docker_image:
