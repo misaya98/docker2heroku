@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to Heroku
-        uses: misaya98/docker2heroku
+        uses: misaya98/docker2heroku@main
 
         with:
           heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
