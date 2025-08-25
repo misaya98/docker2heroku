@@ -1,22 +1,26 @@
-Heroku 容器部署 Action
-这是一个功能强大且灵活的 GitHub Action，它可以自动化将任何 Docker 镜像部署到 Heroku 的完整流程。
+# Deploy Docker Image to Heroku
 
-此 Action 会从 Docker Hub（或其他容器注册中心）拉取一个 Docker 镜像，（可选地）在 Heroku 上创建一个新应用，设置环境变量，并完成部署。
+[![GitHub](https://img.shields.io/github/license/misaya98/docker2heroku)](LICENSE)
+[![GitHub release](https://img.shields.io/github/release/misaya98/docker2heroku.svg)](https://github.com/misaya98/docker2heroku/releases/)
+[![GitHub marketplace](https://img.shields.io/badge/marketplace-docker2heroku-blue?logo=github)](https://github.com/marketplace/actions/deploy-docker-image-to-heroku)
 
-功能特性
-一键部署: 将 Docker 镜像拉取、重打标签、推送到 Heroku 并发布的全过程自动化。
+A powerful and flexible GitHub Action that automates the complete process of deploying any Docker image to Heroku.
 
-创建新应用: 支持在部署时动态创建一个新的 Heroku 应用。
+This action pulls a Docker image from Docker Hub (or other container registries), optionally creates a new Heroku app, configures environment variables, and completes the deployment.
 
-智能命名: 在创建新应用时，如果未指定名称，可根据 Docker 镜像名自动生成唯一的应用名。
+## ✨ Features
 
-环境变量配置: 支持在部署时动态设置多个 Heroku 环境变量。
+- **🚀 One-Click Deployment**: Automates the entire process of pulling, retagging, pushing to Heroku, and releasing Docker images
+- **📱 Create New Apps**: Supports dynamic creation of new Heroku applications during deployment
+- **🎯 Smart Naming**: Automatically generates unique app names based on Docker image names when no name is specified
+- **⚙️ Environment Configuration**: Supports dynamic configuration of multiple Heroku environment variables
+- **🔐 Private Image Support**: Supports Docker Hub login for pulling private images or avoiding rate limits
 
-支持私有镜像: 支持登录到 Docker Hub 以拉取私有镜像或避免速率限制。
+## 🚀 Quick Start
 
-使用方法
-在您的工作流文件中，使用 misaya98/heroku-deploy-action@v1 (请替换为您自己的仓库和版本) 来调用此 Action。
+Add this action to your workflow file (`.github/workflows/deploy.yml`):
 
+```yaml
 name: Deploy to Heroku
 
 on:
@@ -28,123 +32,153 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy App to Heroku
-        uses: misaya98/heroku-deploy-action@v1
+        uses: misaya98/docker2heroku@v1
         with:
-          # 必需：您的 Heroku API 密钥
+          # Required: Your Heroku API Key
           heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
           
-          # 必需：您要部署的 Docker 镜像
+          # Required: Docker image to deploy
           docker_image: 'lobehub/lobe-chat:latest'
           
-          # 可选：指定 Heroku 应用名称
+          # Optional: Specify Heroku app name
           heroku_app_name: 'my-awesome-app'
           
-          # 可选：设置为 'true' 以创建新应用
+          # Optional: Set to 'true' to create new app
           create_new_app: 'false'
           
-          # 可选：设置环境变量
+          # Optional: Set environment variables
           heroku_config_vars: |
             NODE_ENV=production
             NEXTAUTH_URL=https://my-awesome-app.herokuapp.com
             NEXTAUTH_SECRET=${{ secrets.MY_NEXTAUTH_SECRET }}
             
-          # 可选：用于私有镜像或避免速率限制
+          # Optional: For private images or rate limit avoidance
           dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+```
 
-输入参数 (Inputs)
-参数
+## 📋 Input Parameters
 
-描述
+| Parameter | Description | Required | Default |
+|-----------|-------------|----------|---------|
+| `heroku_api_key` | Your Heroku API Key (must be stored in GitHub Secrets) | ✅ | N/A |
+| `docker_image` | Full Docker image name and tag (e.g., `user/repo:latest`) | ✅ | N/A |
+| `heroku_app_name` | Name of the Heroku app (auto-generated if empty) | ❌ | `''` |
+| `create_new_app` | Set to `'true'` to create a new Heroku app | ❌ | `'false'` |
+| `heroku_config_vars` | Heroku environment variables (one per line, format: `KEY=VALUE`) | ❌ | `''` |
+| `dockerhub_username` | Docker Hub username (for private images or rate limits) | ❌ | `''` |
+| `dockerhub_token` | Docker Hub access token (must be stored in GitHub Secrets) | ❌ | `''` |
 
-是否必需
+## 🔑 Required Secrets
 
-默认值
+To use this action, you need to configure the following secrets in your repository:
 
-heroku_api_key
+**Settings** → **Secrets and variables** → **Actions** → **New repository secret**
 
-您的 Heroku API 密钥。必须存放在 GitHub Secrets 中。
+- **`HEROKU_API_KEY`**: Your Heroku account API key. You can find it in your [Heroku Account Settings](https://dashboard.heroku.com/account).
 
-true
+### Optional Secrets (for private Docker images)
 
-N/A
+- **`DOCKERHUB_USERNAME`**: Your Docker Hub username
+- **`DOCKERHUB_TOKEN`**: Your Docker Hub access token
 
-docker_image
+## 📖 Usage Examples
 
-完整的 Docker 镜像名称和标签 (例如 user/repo:latest)。
+### 1. Deploy to Existing App
 
-true
-
-N/A
-
-heroku_app_name
-
-Heroku 应用的名称。如果留空，将根据 docker_image 自动生成。
-
-false
-
-''
-
-create_new_app
-
-设置为 'true' 以创建一个新的 Heroku 应用。
-
-false
-
-'false'
-
-heroku_config_vars
-
-您想设置的 Heroku 环境变量，每行一个，格式为 KEY=VALUE。
-
-false
-
-''
-
-dockerhub_username
-
-您的 Docker Hub 用户名。用于拉取私有镜像或避免速率限制。
-
-false
-
-''
-
-dockerhub_token
-
-您的 Docker Hub 访问令牌。必须存放在 GitHub Secrets 中。
-
-false
-
-''
-
-必需的 Secrets
-为了让此 Action 正常工作，您需要在您的仓库中设置以下 Secrets：
-Settings -> Secrets and variables -> Actions -> New repository secret
-
-HEROKU_API_KEY: 您的 Heroku 账户 API 密钥。您可以在 Heroku 的 账户设置 页面找到它。
-
-示例场景
-1. 部署到一个现有的应用
-- uses: misaya98/heroku-deploy-action@v1
+```yaml
+- uses: misaya98/docker2heroku@v1
   with:
     heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
     docker_image: 'my-user/my-app:1.2.0'
     heroku_app_name: 'my-existing-heroku-app'
+```
 
-2. 创建一个指定名称的新应用并部署
-- uses: misaya98/heroku-deploy-action@v1
+### 2. Create New App with Specific Name
+
+```yaml
+- uses: misaya98/docker2heroku@v1
   with:
     heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
     docker_image: 'my-user/my-app:latest'
     heroku_app_name: 'my-brand-new-app'
     create_new_app: 'true'
+```
 
-3. 创建一个自动命名的新应用并部署
-- uses: misaya98/heroku-deploy-action@v1
+### 3. Create New App with Auto-Generated Name
+
+```yaml
+- uses: misaya98/docker2heroku@v1
   with:
     heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
     docker_image: 'my-user/my-app:latest'
-    create_new_app: 'true' # heroku_app_name 留空
+    create_new_app: 'true'
+    # heroku_app_name is left empty for auto-generation
+```
 
-许可证
-本项目根据 MIT License 授权。
+### 4. Deploy with Environment Variables
+
+```yaml
+- uses: misaya98/docker2heroku@v1
+  with:
+    heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+    docker_image: 'my-user/my-app:latest'
+    heroku_app_name: 'my-app'
+    heroku_config_vars: |
+      NODE_ENV=production
+      DATABASE_URL=${{ secrets.DATABASE_URL }}
+      API_KEY=${{ secrets.API_KEY }}
+```
+
+### 5. Deploy Private Docker Image
+
+```yaml
+- uses: misaya98/docker2heroku@v1
+  with:
+    heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+    docker_image: 'my-private-registry/my-app:latest'
+    heroku_app_name: 'my-app'
+    dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+    dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+```
+
+## 🔄 How It Works
+
+1. **Determine App Name**: Uses provided name or generates one from the Docker image name
+2. **Login to Heroku**: Authenticates with Heroku Container Registry
+3. **Login to Docker Hub** (optional): Authenticates for private images or rate limit avoidance
+4. **Install Heroku CLI**: Downloads and installs the latest Heroku CLI
+5. **Create App** (conditional): Creates a new Heroku app if requested
+6. **Pull Image**: Downloads the specified Docker image
+7. **Retag Image**: Tags the image for Heroku's container registry format
+8. **Push to Heroku**: Uploads the image to Heroku Container Registry
+9. **Set Config Variables**: Configures environment variables in Heroku
+10. **Release**: Deploys the new image to your Heroku app
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Authentication Error**
+- Ensure `HEROKU_API_KEY` is correctly set in your repository secrets
+- Verify your Heroku API key is valid and not expired
+
+**App Already Exists**
+- If `create_new_app` is `true` but app name already exists, the action will fail
+- Use a different app name or set `create_new_app` to `false`
+
+**Docker Image Not Found**
+- Verify the Docker image name and tag are correct
+- For private images, ensure Docker Hub credentials are properly configured
+
+**Rate Limiting**
+- Docker Hub has rate limits for anonymous pulls
+- Configure `dockerhub_username` and `dockerhub_token` to avoid limits
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+## 📝 License
+
+This project is licensed under the [MIT License](LICENSE).
