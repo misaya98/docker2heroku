@@ -1,5 +1,7 @@
-name: Deploy Docker Image to Heroku
+# 工作流名称
+name: Deploy App using Custom Action
 
+# 触发条件：可以手动触发
 on:
   workflow_dispatch:
     inputs:
@@ -25,18 +27,23 @@ jobs:
   deploy-to-heroku:
     runs-on: ubuntu-latest
     steps:
+      # 步骤1：调用您创建的自定义 Action
       - name: Deploy to Heroku
+        # 格式：<您的用户名>/<Action仓库名>@<版本标签或分支名>
+        # 请确保将 'misaya98/docker2heroku' 替换为您自己的 Action 仓库地址和版本
         uses: misaya98/docker2heroku@main
 
+        # 通过 'with' 关键字，将参数传递给您的 Action
         with:
+          # heroku_api_key 的值从【当前】仓库的 Secrets 中读取
           heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
           
-          docker_image: 'lobehub/lobe-chat:latest'
-          heroku_app_name: ''
-          create_new_app: 'true' # 注意：布尔值在这里应作为字符串 'true' 或 'false' 传入
-          
-          heroku_config_vars: |
-            A=B
+          # 使用用户在运行时输入的变量
+          docker_image: ${{ github.event.inputs.docker_image }}
+          heroku_app_name: ${{ github.event.inputs.heroku_app_name }}
+          create_new_app: ${{ github.event.inputs.create_new_app }}
+          heroku_config_vars: ${{ github.event.inputs.heroku_config_vars }}
 
+          # (可选) 如果您的 Docker 镜像是私有的，请取消以下行的注释
           # dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
           # dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
