@@ -79,7 +79,7 @@ jobs:
 
       # 步骤6：(条件执行) 如果用户勾选，则创建新应用
       - name: Create Heroku App if requested
-        if: github.event.inputs.create_new_app == true
+        if: github.event.inputs.create_new_app
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: heroku create ${{ steps.vars.outputs.app_name }}
